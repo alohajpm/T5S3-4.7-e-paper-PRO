@@ -38,14 +38,15 @@ enum {
     SCREEN7_ID,
     SCREEN8_ID,
     SCREEN9_ID,
+    SCREEN10_ID, // New screen for Home Assistant
 };
 
 /*********************************************************************************
  *                              GLOBAL PROTOTYPES
  * *******************************************************************************/
 void ui_epd47_entry(void);
-// week fun (ui interface)
-void ui_if_epd_refr(void);
+// Week fun (UI interface)
+void ui_if_epd_refr(uint16_t time);
 void ui_epd_refr(uint16_t time, uint16_t cycle, uint16_t times);
 
 void ui_if_epd_get_time(uint8_t *h, uint8_t *m, uint8_t *s);
@@ -62,7 +63,7 @@ bool ui_lora_recv(String *str);
 // SD
 void ui_if_epd_set_imgbtn(const char *text, int text_len, int type);
 void ui_if_epd_read_from_SD(void);
-// setting
+// Setting
 void ui_if_epd_set_light(uint8_t light);
 void ui_port_set_refr_cycle(uint16_t cycle);
 void ui_port_set_refr_times(uint16_t times);
@@ -70,17 +71,17 @@ const char *ui_port_set_get_version(void);
 uint16_t ui_port_get_light(void);
 uint16_t ui_port_get_refr_cycle(void);
 uint16_t ui_port_get_refr_times(void);
-// test
+// Test
 bool ui_if_epd_get_SD(void);
 bool ui_if_epd_get_RTC(void);
 bool ui_if_epd_get_TOUCH(void);
 bool ui_if_epd_get_LORA(void);
 bool ui_if_epd_get_WIFI(void);
-// wifi
+// WiFi
 String ui_if_epd_get_WIFI_ip(void);
 const char *ui_if_epd_get_WIFI_ssid(void);
 const char *ui_if_epd_get_WIFI_pwd(void);
-// battery
+// Battery
 /* 25896 */
 void battery_chg_encharge(void);
 void battery_chg_discharge(void);
@@ -112,8 +113,9 @@ float battery_27220_get_BATT_CAP_FULL(void);
 //
 void ui_batt_power_off(void);
 
-// home back
+// Home back
 void home_back_chk_event(void *used_data);
 bool ui_get_home_btn_st(void);
 void ui_set_home_btn_st(bool st);
+
 #endif /* __UI_EPD47H__ */
