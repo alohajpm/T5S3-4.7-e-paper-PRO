@@ -51,12 +51,13 @@ void scr_middle_line(lv_obj_t *parent)
     lv_obj_add_style(line1, &style_line, 0);
     lv_obj_set_align(line1, LV_ALIGN_LEFT_MID);
 }
+
+
 //************************************[ screen 0 ]****************************************** menu
 #if 1
-#define MENU_ICON_NUM  (9)
-#define MENU_CONT_HIGH (LCD_VER_SIZE * 0.84)
+#define MENU_ICON_NUM  (10)  // Updated from 9 to 10
 
-/*** UI interfavce ***/
+/*** UI interface ***/
 void __attribute__((weak)) ui_if_epd_refr(uint16_t time) {}
 // end
 
@@ -67,7 +68,7 @@ struct menu_icon {
     lv_coord_t offs_x;
     lv_coord_t offs_y;
 };
-
+#endif
 #if UI_PORTRAIT_SCR_MODE 
 const struct menu_icon icon_buf[MENU_ICON_NUM] = {
     {&ver_clock,    "clock",     65, 375}, 
@@ -78,7 +79,8 @@ const struct menu_icon icon_buf[MENU_ICON_NUM] = {
     {&ver_wifi,     "wifi",      270, 45},
     {&ver_battery,  "battery",   475, 375},
     {&ver_shutdown, "shutdown",  475, 210},
-    {&ver_refresh,  "refresh",   475, 45}
+    {&ver_refresh,  "refresh",   475, 45},
+    {&ver_ha,       "HA",        680, 210}   // HA icon
 };
 #else
 const struct menu_icon icon_buf[MENU_ICON_NUM] = {
@@ -90,7 +92,8 @@ const struct menu_icon icon_buf[MENU_ICON_NUM] = {
     {&img_wifi,     "wifi"},
     {&img_battery,  "battery"},
     {&img_shutdown, "shutdown"},
-    {&img_refresh, "refresh"},
+    {&img_refresh,  "refresh"},
+    {&img_ha,       "HA"}   // HA icon for non-portrait mode
 };
 #endif
 
@@ -99,7 +102,6 @@ static void menu_btn_event(lv_event_t *e)
     int data = (int)e->user_data;
     if(e->code == LV_EVENT_CLICKED) {
         // printf("%s is clicked.\n", icon_buf[data].icon_str);
-        
         switch (data) {
             case 0: scr_mgr_push(SCREEN1_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             case 1: scr_mgr_push(SCREEN2_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
@@ -110,6 +112,7 @@ static void menu_btn_event(lv_event_t *e)
             case 6: scr_mgr_push(SCREEN7_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             case 7: scr_mgr_push(SCREEN8_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
             case 8: scr_mgr_push(SCREEN9_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break;
+            case 9: scr_mgr_push(SCREEN10_ID, false); ui_if_epd_refr(EPD_REFRESH_TIME); break; // New case for HA icon
             default: break;
         }
     }
@@ -119,14 +122,14 @@ static void create0(lv_obj_t *parent)
 {
 #if UI_PORTRAIT_SCR_MODE 
     for(int i = 0; i < sizeof(icon_buf)/sizeof(icon_buf[0]); i++) {
-        lv_obj_t * btn = lv_btn_create(parent);
+        lv_obj_t *btn = lv_btn_create(parent);
         lv_obj_remove_style_all(btn);
         lv_obj_set_width(btn, 160);
         lv_obj_set_height(btn, 120);
         lv_obj_set_x(btn, icon_buf[i].offs_x);
         lv_obj_set_y(btn, icon_buf[i].offs_y);
-        lv_obj_add_flag(btn, LV_OBJ_FLAG_OVERFLOW_VISIBLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
-        lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_OVERFLOW_VISIBLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);
+        lv_obj_clear_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_style_radius(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -136,54 +139,38 @@ static void create0(lv_obj_t *parent)
         lv_obj_set_style_outline_width(btn, 3, LV_PART_MAIN | LV_STATE_PRESSED);
         lv_obj_set_style_bg_img_src(btn, icon_buf[i].icon_src, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_add_event_cb(btn, menu_btn_event, LV_EVENT_CLICKED, (void *)i);
-    }
-#else
-    lv_obj_t *scr0_cont = lv_obj_create(parent);
-    lv_obj_set_size(scr0_cont, lv_pct(100), MENU_CONT_HIGH);
-    lv_obj_set_style_bg_color(scr0_cont, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_set_scrollbar_mode(scr0_cont, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_border_width(scr0_cont, 0, LV_PART_MAIN);
-    lv_obj_set_style_radius(scr0_cont, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(scr0_cont, 0, LV_PART_MAIN);
-    lv_obj_align(scr0_cont, LV_ALIGN_BOTTOM_MID, 0, 0);
 
-    int row_n = 2;
-    int col_n = 5;
-    lv_obj_t *img_buf[MENU_ICON_NUM] = {0};
-    lv_obj_t *lab_buf[MENU_ICON_NUM] = {0};
-    
-    for(int i = 0; i < MENU_ICON_NUM; i++) {
-        lv_obj_t *img = lv_img_create(scr0_cont);
-        lv_img_set_src(img, icon_buf[i].icon_src);
-        lv_obj_add_flag(img, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_add_event_cb(img, menu_btn_event, LV_EVENT_CLICKED, (void *)i);
-        lv_obj_t *label = lv_label_create(scr0_cont);
-        lv_label_set_text(label, icon_buf[i].icon_str);
-        img_buf[i] = img;
-        lab_buf[i] = label;
-    }
+        // For the HA icon (index 9), rotate it 90° left and add the "Remote" label.
+        if(i == 9) {
+            // Rotate the HA button 90° counter-clockwise.
+            // Set pivot to center (80, 60) since the button is 160x120.
+            lv_obj_set_style_transform_pivot_x(btn, 80, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_transform_pivot_y(btn, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_transform_angle(btn, -900, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_coord_t x_gap = (LCD_HOR_SIZE-(img_clock.header.w * col_n)) / (col_n+1);
-    lv_coord_t y_gap = (MENU_CONT_HIGH / 5);
-
-    // printf("x=%d, y=%d\n", x_gap, y_gap);
-
-    // row 1
-    lv_obj_align_to(img_buf[0], scr0_cont, LV_ALIGN_TOP_LEFT, x_gap, 0);
-    for(int i = 1; i < col_n; i++) {
-        lv_obj_align_to(img_buf[i], img_buf[i-1], LV_ALIGN_OUT_RIGHT_MID, x_gap, 0);
-    }
-
-    if(MENU_ICON_NUM > col_n) {
-        // row 2
-        lv_obj_align_to(img_buf[col_n], img_buf[0], LV_ALIGN_OUT_BOTTOM_MID, 0, y_gap);
-        for(int i = col_n+1; i < MENU_ICON_NUM; i++) {
-            lv_obj_align_to(img_buf[i], img_buf[i-1], LV_ALIGN_OUT_RIGHT_MID, x_gap, 0);
+            // Create the "Remote" label as a sibling of the HA button.
+            lv_obj_t *remote_label = lv_label_create(parent);
+            lv_label_set_text(remote_label, "Remote");
+            // Align the label relative to the HA button: move it down and to the right by ~20px.
+            lv_obj_align_to(remote_label, btn, LV_ALIGN_OUT_BOTTOM_MID, 80, -75);
+            // Rotate the "Remote" label 90° counter-clockwise.
+            lv_obj_set_style_transform_pivot_x(remote_label, lv_obj_get_width(remote_label)/2, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_transform_pivot_y(remote_label, lv_obj_get_height(remote_label)/2, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_transform_angle(remote_label, -900, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
-
-    for(int i = 0; i < MENU_ICON_NUM; i++) {
-        lv_obj_align_to(lab_buf[i], img_buf[i], LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+#else
+    // Non-portrait mode code (if needed, add similar modifications here)
+    for(int i = 0; i < sizeof(icon_buf)/sizeof(icon_buf[0]); i++) {
+        lv_obj_t *btn = lv_btn_create(parent);
+        // Create button and set background image, etc.
+        lv_obj_add_event_cb(btn, menu_btn_event, LV_EVENT_CLICKED, (void *)i);
+        if(i == 9) {
+            lv_obj_t *remote_label = lv_label_create(parent);
+            lv_label_set_text(remote_label, "Remote");
+            // For non-portrait, adjust alignment similarly.
+            lv_obj_align_to(remote_label, btn, LV_ALIGN_OUT_BOTTOM_MID, 20, 20);
+        }
     }
 #endif
 }
@@ -194,10 +181,10 @@ static void destroy0(void) { }
 static scr_lifecycle_t screen0 = {
     .create = create0,
     .entry =   entry0,
-    .exit  =   exit0,
+    .exit =    exit0,
     .destroy = destroy0,
 };
-#endif
+
 //************************************[ screen 1 ]****************************************** clock
 #if 1
 /*** UI interfavce ***/
@@ -339,7 +326,7 @@ static scr_lifecycle_t screen1 = {
 static lv_obj_t *scr2_cont;
 static lv_obj_t *scr2_cont_info;
 static lv_obj_t *lora_mode_sw;
-// static lv_obj_t *lora_open_sw;
+static lv_obj_t *lora_open_sw;
 static lv_obj_t *lora_lab_buf[11] = {0};
 static lv_obj_t *lora_lab_mode;
 static lv_obj_t *lora_lab_time;
@@ -353,7 +340,7 @@ static lv_obj_t * scr2_create_label(lv_obj_t *parent)
     lv_obj_t *label = lv_label_create(parent);
     lv_obj_set_width(label, LCD_HOR_SIZE/2-50);
     lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
-    // lv_obj_set_style_border_width(label, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_width(label, 1, LV_PART_MAIN);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
     return label;
 }
@@ -414,22 +401,22 @@ static void lora_mode_sw_event(lv_event_t * e)
     if(e->code == LV_EVENT_CLICKED){
         int mode = ui_if_epd_get_LORA_mode();
 
-        // if(e->target == lora_open_sw) {
-        //     static int open = 0;
-        //     lv_obj_t *lab = (lv_obj_t *)e->user_data;
+        if(e->target == lora_open_sw) {
+               static int open = 0;
+               lv_obj_t *lab = (lv_obj_t *)e->user_data;
             
-        //     if(mode == 0 && open == 0) {
-        //         lv_timer_resume(lora_send_timer);
-        //         lv_label_set_text(lab, "SEND CLOSE");
-        //     }
-        //     if(mode == 0 && open == 1) {
-        //         lv_timer_pause(lora_send_timer);
-        //         lv_label_set_text(lab, "SEND OPEN");
-        //         ui_if_epd_refr(EPD_REFRESH_TIME);
-        //     }
-        //     open = !open;
+               if(mode == 0 && open == 0) {
+                   lv_timer_resume(lora_send_timer);
+                   lv_label_set_text(lab, "SEND CLOSE");
+               }
+               if(mode == 0 && open == 1) {
+                   lv_timer_pause(lora_send_timer);
+                   lv_label_set_text(lab, "SEND OPEN");
+                   ui_if_epd_refr(EPD_REFRESH_TIME);
+               }
+               open = !open;
 
-        // } else 
+           } else 
         {
             mode = !mode;
             if(mode == LORA_MODE_SEND) { // send
@@ -437,7 +424,7 @@ static void lora_mode_sw_event(lv_event_t * e)
                 lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "send");
                 lv_label_set_text(lora_lab_buf[0], "SEND:");
                 lora_sr_cnt = 1;
-                // lv_timer_resume(lora_send_timer);
+                lv_timer_resume(lora_send_timer);
             } else if(mode == LORA_MODE_RECV) { // recv
                 lv_obj_add_flag(lora_lab_time, LV_OBJ_FLAG_HIDDEN);
                 lv_label_set_text_fmt(lora_lab_mode, "%s : %s", "Mode", "recv");
@@ -446,7 +433,7 @@ static void lora_mode_sw_event(lv_event_t * e)
                     if(lora_lab_buf[i])
                         lv_label_set_text(lora_lab_buf[i], " ");
                 }
-                // lv_timer_pause(lora_send_timer);
+                lv_timer_pause(lora_send_timer);
             }
             lora_lab_cnt = 1;
             ui_if_epd_set_LORA_mode(mode);
@@ -480,7 +467,7 @@ static void ta_event_cb(lv_event_t * e)
 
     if(code == LV_EVENT_VALUE_CHANGED)
     {
-        // printf("hello\n");
+        printf("hello\n");
         ui_if_epd_refr(EPD_REFRESH_TIME);
     }
 }
@@ -522,13 +509,13 @@ static void create2(lv_obj_t *parent) {
     lv_label_set_text(label, "MODE SW");
     lv_obj_add_event_cb(lora_mode_sw, lora_mode_sw_event, LV_EVENT_CLICKED, NULL);
 
-    // lora_open_sw = lv_btn_create(parent);
-    // lv_obj_set_style_radius(lora_open_sw, 5, LV_PART_MAIN);
-    // lv_obj_set_style_border_width(lora_open_sw, 2, LV_PART_MAIN);
-    // label = lv_label_create(lora_open_sw);
-    // lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
-    // lv_label_set_text(label, "SEND OPEN");
-    // lv_obj_add_event_cb(lora_open_sw, lora_mode_sw_event, LV_EVENT_CLICKED, label);
+    lora_open_sw = lv_btn_create(parent);
+    lv_obj_set_style_radius(lora_open_sw, 5, LV_PART_MAIN);
+    lv_obj_set_style_border_width(lora_open_sw, 2, LV_PART_MAIN);
+    label = lv_label_create(lora_open_sw);
+    lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
+    lv_label_set_text(label, "SEND OPEN");
+    lv_obj_add_event_cb(lora_open_sw, lora_mode_sw_event, LV_EVENT_CLICKED, label);
 
     // --------------- LEFT ---------------
     scr_middle_line(parent);
@@ -643,14 +630,14 @@ static lv_obj_t * scr2_create_label(lv_obj_t *parent)
     lv_obj_t *label = lv_label_create(parent);
     lv_obj_set_width(label, LCD_HOR_SIZE/2-50);
     lv_obj_set_style_text_font(label, &Font_Mono_Bold_25, LV_PART_MAIN);   
-    // lv_obj_set_style_border_width(label, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_width(label, 1, LV_PART_MAIN);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
     return label;
 }
 
 static void lora_send_timer_event(lv_timer_t *t)
 {
-    // if(ui_if_epd_get_LORA() == false) return;
+    if(ui_if_epd_get_LORA() == false) return;
 
     if(lora_mode_st == LORA_MODE_SEND) return;
     
@@ -881,7 +868,7 @@ static void read_img_btn_event(lv_event_t * e)
 {
     char *file_name = lv_label_get_text((lv_obj_t *)e->user_data);
 
-    if(e->code = LV_EVENT_CLICKED) {
+    if(e->code == LV_EVENT_CLICKED) {
         
         static char path[32];
         lv_snprintf(path, 32, "S:/%s", file_name);
@@ -1499,8 +1486,8 @@ static void create6(lv_obj_t *parent) {
     lv_obj_add_event_cb(btn, wifi_config_event_handler, LV_EVENT_CLICKED, NULL);
 
     //---------------------
-    // scr_middle_line(parent);
-    // back
+    scr_middle_line(parent);
+   // back
     scr_back_btn_create(parent, "Wifi", scr6_btn_event_cb);
 }
 static void entry6(void) { }
@@ -1789,18 +1776,18 @@ static void create8(lv_obj_t *parent)
     lv_img_set_src(img, &img_start);
     lv_obj_center(img);
 
-    // const char *str1 = "PWR: Press and hold to power on";
+    const char *str1 = "PWR: Press and hold to power on";
 
-    // lv_obj_t *label = lv_label_create(parent);
-    // lv_label_set_text(label, str1);
-    // lv_obj_set_style_transform_angle(label, -900, 0);
-    // lv_obj_align(label, LV_ALIGN_RIGHT_MID, 60, 80);
+    lv_obj_t *label = lv_label_create(parent);
+    lv_label_set_text(label, str1);
+    lv_obj_set_style_transform_angle(label, -900, 0);
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 60, 80);
 
-    // lv_coord_t w = lv_txt_get_width(str1, strlen(str1), &Font_Mono_Bold_20, 0, false);
-    // lv_obj_set_style_transform_pivot_x(label, w / 2, 0);
+    lv_coord_t w = lv_txt_get_width(str1, strlen(str1), &Font_Mono_Bold_20, 0, false);
+    lv_obj_set_style_transform_pivot_x(label, w / 2, 0);
 
-    // back
-    // scr_back_btn_create(parent, "Shoutdown", scr8_btn_event_cb);
+    //back
+    scr_back_btn_create(parent, "Shoutdown", scr8_btn_event_cb);
 
     lv_timer_create(scr8_shutdown_timer_event, EPD_REFRESH_TIME+500, NULL);
 }
@@ -1862,28 +1849,146 @@ static scr_lifecycle_t screen9 = {
     .destroy = destroy9,
 };
 #endif
-//************************************[ UI ENTRY ]******************************************
 
-void home_back_timer_event(lv_timer_t *t)
-{
-    if(ui_get_home_btn_st()) {
-        int id = scr_mgr_get_curr_id();
-        ui_set_home_btn_st(false);
-        
-        // printf("id = %d home_back_chk_event\n", id);
+//************************************[ screen 10 ]****************************************** Home Assistant
+#if 1
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
-        if(id != SCREEN0_ID) {
-            ui_if_epd_refr(EPD_REFRESH_TIME);
-            scr_mgr_switch(SCREEN0_ID, false);
-        }
+static lv_obj_t *ha_list;
+static const char* HA_SERVER = "http://10.0.0.115:8123";  // <-- Set your Home Assistant server URL here
+static const char* HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4NzlkYzViYzMxNzk0YTkzYTdhZjcxMDEwOTk4NTdkNiIsImlhdCI6MTczOTgwOTMzMywiZXhwIjoyMDU1MTY5MzMzfQ.Jq7_5zVBVe1n5TW_6-Lq8saf6ImmMjnbx4cDYQpmi-M";      // <-- Set your Home Assistant token here
+
+typedef struct {
+  const char* name;
+  const char* entity;
+} ha_device_t;
+
+static const ha_device_t ha_devices[] = {
+  {"Hallway", "light.hallway_main_lights"},
+  {"Master Bedroom", "light.master_bedroom_lights"},
+  {"Master Bathroom", "light.master_bathroom_main_lights"},
+  {"Kitchen", "light.kitchen_main_lights"},
+  {"Living Room", "light.living_room_main_lights"},
+  {"Office", "switch.sonoff_1002032ec4"},
+  {"Bedroom Closet", "switch.bedroom_closet_switch"}
+};
+static const int ha_device_count = sizeof(ha_devices)/sizeof(ha_devices[0]);
+
+// Function to get the current state of a device (returns true if "on")
+bool get_device_state(const char* entity) {
+  HTTPClient http;
+  String url = String(HA_SERVER) + "/api/states/" + entity;
+  http.begin(url);
+  http.addHeader("Authorization", "Bearer " + String(HA_TOKEN));
+  int httpCode = http.GET();
+  bool state = false;
+  if(httpCode == 200) {
+    String payload = http.getString();
+    if(payload.indexOf("\"state\":\"on\"") >= 0) {
+      state = true;
     }
+  }
+  http.end();
+  return state;
 }
 
-// void home_back_chk_event(void *used_data)
-// {
-//     scr_mgr_switch(SCREEN0_ID, false);
-//     printf("home_back_chk_event\n");
-// }
+// Function to toggle a device state using the REST API
+void toggle_device_state(const char* entity, bool turn_on) {
+  HTTPClient http;
+  String ent(entity);
+  int dotIndex = ent.indexOf('.');
+  if(dotIndex < 0) return;
+  String domain = ent.substring(0, dotIndex);
+  String service = turn_on ? "turn_on" : "turn_off";
+  String url = String(HA_SERVER) + "/api/services/" + domain + "/" + service;
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("Authorization", "Bearer " + String(HA_TOKEN));
+  String payload = "{\"entity_id\": \"" + String(entity) + "\"}";
+  int httpCode = http.POST(payload);
+  http.end();
+}
+
+// Callback for when a switch is toggled
+static void ha_toggle_event_cb(lv_event_t * e) {
+    lv_obj_t * sw = lv_event_get_target(e);
+    int index = (int)lv_event_get_user_data(e);
+    // Check if the switch has the LV_STATE_CHECKED flag (i.e. "on")
+    bool new_state = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    toggle_device_state(ha_devices[index].entity, new_state);
+  }  
+
+// Function to create a list item for a Home Assistant device
+static void create_ha_list_item(lv_obj_t * parent, int index) {
+    lv_obj_t * cont = lv_obj_create(parent);
+    lv_obj_set_size(cont, lv_pct(100), 50);
+    lv_obj_set_layout(cont, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_all(cont, 5, 0);
+    
+    lv_obj_t * label = lv_label_create(cont);
+    lv_label_set_text(label, ha_devices[index].name);
+    lv_obj_set_style_text_font(label, &Font_Mono_Bold_20, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(EPD_COLOR_TEXT), 0);
+    
+    lv_obj_t * sw = lv_switch_create(cont);
+    bool state = get_device_state(ha_devices[index].entity);
+    // Set the switch state based on the current device state:
+    if(state) {
+        lv_obj_add_state(sw, LV_STATE_CHECKED);
+    } else {
+        lv_obj_clear_state(sw, LV_STATE_CHECKED);
+    }
+    lv_obj_add_event_cb(sw, ha_toggle_event_cb, LV_EVENT_VALUE_CHANGED, (void*)index);
+  }
+  
+static void create10(lv_obj_t * parent) {
+  // Title
+  lv_obj_t * title = lv_label_create(parent);
+  lv_label_set_text(title, "Home Assistant");
+  lv_obj_set_style_text_font(title, &Font_Mono_Bold_30, 0);
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+  
+  // Create a container (list) for device items
+  ha_list = lv_obj_create(parent);
+  lv_obj_set_size(ha_list, lv_pct(100), lv_pct(80));
+  lv_obj_set_style_pad_all(ha_list, 10, 0);
+  lv_obj_set_layout(ha_list, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(ha_list, LV_FLEX_FLOW_COLUMN);
+  lv_obj_align(ha_list, LV_ALIGN_BOTTOM_MID, 0, -10);
+  
+  // Add each device to the list
+  for(int i = 0; i < ha_device_count; i++) {
+    create_ha_list_item(ha_list, i);
+  }
+  
+  // Back button to return to the main menu
+  scr_back_btn_create(parent, "HA", [](lv_event_t * e){
+      ui_if_epd_refr(EPD_REFRESH_TIME);
+      scr_mgr_switch(SCREEN0_ID, false);
+  });
+}
+
+static void entry10(void) { }
+static void exit10(void) { }
+static void destroy10(void) { }
+
+static scr_lifecycle_t screen10 = {
+  .create = create10,
+  .entry = entry10,
+  .exit  = exit10,
+  .destroy = destroy10,
+};
+#endif
+
+//************************************[ UI ENTRY ]******************************************
+void home_back_timer_event(lv_timer_t *t) {
+    if(ui_get_home_btn_st()) {
+        scr_mgr_switch(SCREEN0_ID, false);
+        ui_set_home_btn_st(false);
+    }
+}
 
 void ui_epd47_entry(void)
 {
@@ -1900,8 +2005,9 @@ void ui_epd47_entry(void)
     scr_mgr_register(SCREEN5_ID, &screen5); // test
     scr_mgr_register(SCREEN6_ID, &screen6); // wifi
     scr_mgr_register(SCREEN7_ID, &screen7); // battery
-    scr_mgr_register(SCREEN8_ID, &screen8); // battery
-    scr_mgr_register(SCREEN9_ID, &screen9); // battery
+    scr_mgr_register(SCREEN8_ID, &screen8); // shutdown
+    scr_mgr_register(SCREEN9_ID, &screen9); // refresh
+    scr_mgr_register(SCREEN10_ID, &screen10); // Home Assistant
 
     scr_mgr_switch(SCREEN0_ID, false); // set root screen
     scr_mgr_set_anim(LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE, LV_SCR_LOAD_ANIM_NONE);
