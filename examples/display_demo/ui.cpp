@@ -1856,8 +1856,8 @@ static scr_lifecycle_t screen9 = {
 #include <ArduinoJson.h>
 
 static lv_obj_t *ha_list;
-static const char* HA_SERVER = "http://10.0.0.115:8123";  // <-- Set your Home Assistant server URL here
-static const char* HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4NzlkYzViYzMxNzk0YTkzYTdhZjcxMDEwOTk4NTdkNiIsImlhdCI6MTczOTgwOTMzMywiZXhwIjoyMDU1MTY5MzMzfQ.Jq7_5zVBVe1n5TW_6-Lq8saf6ImmMjnbx4cDYQpmi-M";      // <-- Set your Home Assistant token here
+static const char* HA_SERVER = "IP_HERE";  // <-- Set your Home Assistant server URL here
+static const char* HA_TOKEN = "TOKEN_HERE";      // <-- Set your Home Assistant token here
 
 typedef struct {
   const char* name;
