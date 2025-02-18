@@ -19,8 +19,8 @@
 #include <XPowersLib.h>
 
 // define 
-#define WIFI_SSID "xinyuandianzi"
-#define WIFI_PASSWORD "AA15994823428"
+#define WIFI_SSID "JN24"
+#define WIFI_PASSWORD "D3skt0pK1ng"
 
 // init flag
 extern bool sd_is_init;
