@@ -1,4 +1,3 @@
-
 #include "ui.h"
 #include "display_demo.h"
 #include "esp_sleep.h"
@@ -291,31 +290,39 @@ static void get_curr_time(lv_timer_t *t)
     }
 }
 
-// wifi
+//------------------------------------------------------------------------------
+// WiFi Configuration: Connect on startup using defined SSID and Password
+//------------------------------------------------------------------------------
 void wifi_init(void)
 {
-    Serial.printf("SSID len: %d\n", strlen(wifi_ssid));
-    Serial.printf("PWSD len: %d\n", strlen(wifi_password));
-    if(strlen(wifi_ssid) == 0 || strlen(wifi_password) == 0) {
-        return;
+    // Copy defined SSID and password into global arrays if not already set
+    if(strlen(wifi_ssid) == 0) {
+        strncpy(wifi_ssid, WIFI_SSID, WIFI_SSID_MAX_LEN);
+    }
+    if(strlen(wifi_password) == 0) {
+        strncpy(wifi_password, WIFI_PASSWORD, WIFI_PSWD_MAX_LEN);
     }
 
+    Serial.printf("SSID: %s\n", wifi_ssid);
+    Serial.printf("Password: %s\n", wifi_password);
+
     WiFi.begin(wifi_ssid, wifi_password);
-    wl_status_t wifi_state = WiFi.status();
+    Serial.print("Connecting to WiFi");
     last_tick = millis();
-    while (wifi_state != WL_CONNECTED){
+    wl_status_t wifi_state = WiFi.status();
+    while (wifi_state != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
         wifi_state = WiFi.status();
         if(wifi_state == WL_CONNECTED){
             wifi_is_connect = true;
-            Serial.println("WiFi connected!");
+            Serial.println("\nWiFi connected!");
+            Serial.printf("IP address: %s\n", WiFi.localIP().toString().c_str());
             configTime(8 * 3600, 0, ntpServer1, ntpServer2);
             break;
         }
-        if (millis() - last_tick > 5000) {
-            Serial.println("WiFi connected falied!");
-            last_tick = millis();
+        if (millis() - last_tick > 10000) { // 10 second timeout
+            Serial.println("\nWiFi connection failed!");
             break;
         }
     }
@@ -508,7 +515,9 @@ void setup()
 
     eeprom_init();
 
-    // wifi_init();
+    // Enable WiFi connection on startup
+    wifi_init();
+
     configTime(8 * 3600, 0, ntpServer1, ntpServer2);
 
     epd_init();
@@ -630,7 +639,6 @@ void setup()
     pinMode(TOUCH_RST, OUTPUT);
     pinMode(LORA_RST, OUTPUT);
     
-
     get_curr_data_timer = lv_timer_create(get_curr_time, 5000, NULL);
 }
 
